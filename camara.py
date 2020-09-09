@@ -9,19 +9,19 @@ import cv2
 
 def main():
     #Conectamos a la camara con la url directa
-    camara = cv2.VideoCapture('http://192.168.137.48/cam-lo.png')
+    camara = cv2.VideoCapture('https://192.168.8.8:8080/video')
     #camara = cv2.VideoCapture(0)
 
     #Elegimos un tema de PySimpleGUI
     sg.theme('DarkGreen5')
     #Definimos los elementos de la interfaz grafica
-    layout = [[sg.Image(filename='', key='-image-')],
-              [sg.Button('Tomar Fotografia'),sg.Button('Salir')]]
+    layout = [[sg.Button('Tomar Fotografia'),sg.Button('Salir')],[sg.Image(filename='', key='-image-')]]
     #Creamos la interfaz grafica
     window = sg.Window('Camara ESP32-OV2640',
                        layout,
                        no_titlebar=False,
-                       location=(0, 0))
+                       location=(0, 0),
+                       resizable=True)
 
     image_elem = window['-image-']
 
@@ -36,7 +36,7 @@ def main():
         #Si salimos
         #if tecla ==27:
          #   break
-        if event in ('Exit', None):
+        if event in ('Salir','Exit', None):
             break
 
         #Si tomamos foto
