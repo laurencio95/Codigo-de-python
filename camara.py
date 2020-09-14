@@ -9,7 +9,9 @@ import cv2
 
 def main():
     #Conectamos a la camara con la url directa
-    camara = cv2.VideoCapture('https://192.168.8.8:8080/video')
+    stream = urllib.request.urlopen('http://192.168.1.78:8080/video')
+    bytes = b''
+    #camara = cv2.VideoCapture('https://192.168.1.126:8080/video')
     #camara = cv2.VideoCapture(0)
 
     #Elegimos un tema de PySimpleGUI
@@ -26,11 +28,37 @@ def main():
     image_elem = window['-image-']
 
     numero = 0
+    img=None
     #Iniciamos la lectura y actualizacion
-    while camara.isOpened():
+    while True:
         #Obtenemos informacion de la interfaz grafica y video
         event, values = window.read(timeout=0)
-        ret, frame = camara.read()
+        bytes += stream.read(1024)
+        a = bytes.find(b'\xff\xd8')
+        b = bytes.find(b'\xff\xd9')
+        if a != -1 and b != -1 and bytes != b'':
+            jpg = bytes[a:b+2]
+            bytes = bytes[b+2:]
+            #Si tomamos foto
+            
+            if event == 'Tomar Fotografia':
+                ruta = sg.popup_get_folder(title='Guardar Fotografia', message="Carpeta destino")
+                cv2.imwrite(ruta + "/" + str(date.today()) + str(numero) + ".png", jpg)
+            try:
+                img = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                #Mandamos el video a la GUI
+                #cv2.imshow('Video', img)
+                imgbytes = cv2.imencode('.png', img)[1].tobytes()  # ditto
+                image_elem.update(data=imgbytes)
+                numero = numero + 1
+            except Exception as e:
+                print(e)
+                pass
+            if cv2.waitKey(1) == 27:
+                exit(0)
+        else:
+            pass
+            #print("else")
         #tecla = cv2.waitKey(5) & 0xFF
        
         #Si salimos
@@ -38,17 +66,9 @@ def main():
          #   break
         if event in ('Salir','Exit', None):
             break
-
-        #Si tomamos foto
-        elif event == 'Tomar Fotografia':
+        elif event == 'Tomar Fotografia' and img is not None:
             ruta = sg.popup_get_folder(title='Guardar Fotografia', message="Carpeta destino")
-            cv2.imwrite(ruta + "/" + str(date.today()) + str(numero) + ".png", frame)
+            cv2.imwrite(ruta + "/" + str(date.today()) + str(numero) + ".png", img)
 
-        if not ret:
-            break
-
-        #Mandamos el video a la GUI
-        imgbytes = cv2.imencode('.png', frame)[1].tobytes()  # ditto
-        image_elem.update(data=imgbytes)
-        numero = numero + 1
+        
 main()
